@@ -1,4 +1,21 @@
 function love.load()
+    math.randomseed(os.time())
+
+    gameState = 1 -- 1 = Menu, 2 = Jogo
+    maxTime = 3
+    timer = maxTime
+    points = 0
+
+    sounds = {
+        music = love.audio.newSource('sounds/music.mp3', 'static'),
+        shot = love.audio.newSource('sounds/shot.ogg', 'static')
+    }
+
+    sounds.music:setLooping(true)
+    sounds.shot:setVolume(0.1)
+    sounds.music:setVolume(0.05)
+    love.audio.play(sounds.music)
+
     love.window.setTitle("Zombie Killer")
     sprites = {
         background = love.graphics.newImage('sprites/background.png'),
@@ -13,23 +30,26 @@ function love.load()
         speed = 180
     }
 
-    zombies = {}
+    myFont = love.graphics.newFont(30)
 
+    zombies = {}
     bullets = {}
 end
 
 function love.update(dt)
-    if love.keyboard.isDown('w') then
-        player.y = player.y - player.speed * dt
-    end
-    if love.keyboard.isDown('a') then
-        player.x = player.x - player.speed * dt
-    end
-    if love.keyboard.isDown('s') then
-        player.y = player.y + player.speed * dt
-    end
-    if love.keyboard.isDown('d') then
-        player.x = player.x + player.speed * dt
+    if gameState == 2 then
+        if love.keyboard.isDown('w') and player.y > 10 then
+            player.y = player.y - player.speed * dt
+        end
+        if love.keyboard.isDown('a') and player.x > 10 then
+            player.x = player.x - player.speed * dt
+        end
+        if love.keyboard.isDown('s') and player.y < love.graphics.getHeight() - 10 then
+            player.y = player.y + player.speed * dt
+        end
+        if love.keyboard.isDown('d') and player.x < love.graphics.getWidth() - 10 then
+            player.x = player.x + player.speed * dt
+        end
     end
 
     for i,z in ipairs(zombies) do
@@ -39,6 +59,9 @@ function love.update(dt)
         if getDistanceBetween(z.x, player.x, z.y, player.y) < 20 then
             for i,z in ipairs(zombies) do
                 zombies[i] = nil
+                gameState = 1
+                player.x = love.graphics.getWidth() / 2
+                player.y = love.graphics.getHeight() / 2 
             end
         end
     end
@@ -60,6 +83,7 @@ function love.update(dt)
             if getDistanceBetween(z.x, b.x, z.y, b.y) < 20 then
                 z.dead = true
                 b.dead = true
+                points = points + 1
             end
         end
     end
@@ -77,22 +101,38 @@ function love.update(dt)
             table.remove(bullets, i)
         end
     end
-end
 
-function love.keypressed(key)
-    if key == "space" then
-        spawnZombie()
+    if gameState == 2 then
+        timer = timer - dt
+        if timer <0 then
+            spawnZombie()
+            maxTime = maxTime * 0.95
+            timer = maxTime
+        end  
     end
 end
 
 function love.mousepressed(x,y, key)
-    if key == 1 then
+    if key == 1 and gameState == 2 then
         spawnBullet()
+        love.audio.stop(sounds.shot)
+        love.audio.play(sounds.shot)
+    elseif key == 1 and gameState == 1 then
+        gameState = 2
+        maxTime = 2
+        timer = maxTime
+        points = 0
     end
 end
 
 function love.draw()
     love.graphics.draw(sprites.background)
+    love.graphics.setFont(myFont)
+    if gameState == 1 then
+        love.graphics.printf("Clique em qualquer lugar para começar", 0, 50, love.graphics.getWidth(), "center")
+    elseif gameState == 2 then
+        love.graphics.print("Pontos: ".. points, 5, 5)
+    end
     love.graphics.draw(sprites.player, player.x, player.y, getMouseRotation(), nil, nil, sprites.player:getWidth() / 2, sprites.player:getHeight() / 2)
     for i,z in ipairs(zombies) do
         love.graphics.draw(sprites.zombie, z.x, z.y, getZombieRotation(z), nil, nil, sprites.zombie:getWidth() / 2, sprites.zombie:getHeight() / 2)
@@ -103,17 +143,31 @@ function love.draw()
 end
 
 function getMouseRotation()
-    atan2 = math.atan2(love.mouse.getY() - player.y, love.mouse.getX() - player.x)
-    return atan2
+    if gameState == 2 then
+        atan2 = math.atan2(love.mouse.getY() - player.y, love.mouse.getX() - player.x)
+        return atan2
+    end
 end
 
 function spawnZombie()
     local zombie = {
-        x = math.random(0, love.graphics.getWidth()),
-        y = math.random(0, love.graphics.getHeight()),
+        x = 0,
+        y = 0,
         dead = false,
         speed = math.random(60, 250)
     }
+
+    local side = math.random(1, 4)
+    if side == 1 then --cima
+        zombie.y = -30
+    elseif side == 2 then --esquerda
+        zombie.x = -30
+    elseif side == 3 then --baixo
+        zombie.y = love.graphics.getHeight() + 30
+    elseif side == 4 then --direita
+        zombie.x = love.graphics.getWidth() + 30
+    end
+
     table.insert(zombies, zombie)
 end
 

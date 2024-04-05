@@ -11,7 +11,13 @@
         "getZombiePosition",
         "getDistanceBetween",
         "bullets",
-        "spawnBullet"
+        "spawnBullet",
+        "gameState",
+        "maxTime",
+        "timer",
+        "myFont",
+        "points",
+        "sounds"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"
