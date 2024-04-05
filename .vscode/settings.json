@@ -1,0 +1,19 @@
+{
+    "Lua.diagnostics.globals": [
+        "love",
+        "sprites",
+        "player",
+        "getMouseRotation",
+        "atan2",
+        "zombies",
+        "spawnZombie",
+        "getZombieRotation",
+        "getZombiePosition",
+        "getDistanceBetween",
+        "bullets",
+        "spawnBullet"
+    ],
+    "Lua.diagnostics.disable": [
+        "deprecated"
+    ]
+}
